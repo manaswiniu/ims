@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}{{ "Edit customer" if customer else "New customer" }} - IMS{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <h1 class="h3 mb-3">{{ "Edit " ~ customer.name if customer else "New customer" }}</h1>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ m.field(form.name) }}
+      {{ m.field(form.email) }}
+      {{ m.field(form.phone) }}
+      {{ m.field(form.address) }}
+      {{ form.submit(class_="btn btn-primary") }}
+      <a href="{{ url_for('customers.customer_detail', customer_id=customer.id) if customer else url_for('customers.customers') }}"
+         class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

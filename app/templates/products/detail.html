@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}{{ product.sku }} - IMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">{{ product.sku }} - {{ product.name }} {{ m.active_badge(product.is_active) }}</h1>
+  {% if current_user.is_admin %}
+    <div>
+      <a href="{{ url_for('products.adjust_product_stock', product_id=product.id) }}" class="btn btn-sm btn-outline-primary">Adjust stock</a>
+      <a href="{{ url_for('products.edit_product', product_id=product.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+      {{ m.post_button(url_for('products.toggle_product', product_id=product.id),
+                       "Deactivate" if product.is_active else "Activate") }}
+    </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <dl class="row">
+      <dt class="col-5">Category</dt><dd class="col-7">{{ product.category.name }}</dd>
+      <dt class="col-5">Selling price</dt><dd class="col-7">{{ product.unit_price|money }}</dd>
+      <dt class="col-5">Cost price</dt><dd class="col-7">{{ product.cost_price|money }}</dd>
+      <dt class="col-5">In stock</dt>
+      <dd class="col-7">
+        {{ product.stock_qty }}
+        {% if product.is_low_stock %}<span class="badge text-bg-danger">Low</span>{% endif %}
+      </dd>
+      <dt class="col-5">Reorder level</dt><dd class="col-7">{{ product.reorder_level }}</dd>
+    </dl>
+    {% if product.description %}<p>{{ product.description }}</p>{% endif %}
+
+    <h2 class="h6 mt-4">Suppliers</h2>
+    {% if product.supplier_links %}
+      <ul class="list-unstyled">
+        {% for link in product.supplier_links %}
+          <li>
+            <a href="{{ url_for('suppliers.supplier_detail', supplier_id=link.supplier.id) }}">{{ link.supplier.name }}</a>
+            {% if link.is_preferred %}<span class="badge text-bg-primary">Preferred</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted small">Not linked to any supplier yet. Link it from a supplier's page.</p>
+    {% endif %}
+  </div>
+
+  <div class="col-md-7">
+    <h2 class="h6">Stock history <span class="text-muted small">(latest 50)</span></h2>
+    {% if movements %}
+      <table class="table table-sm">
+        <thead><tr><th>When</th><th class="text-end">Change</th><th>Reason</th><th>Reference</th></tr></thead>
+        <tbody>
+          {% for mv in movements %}
+            <tr>
+              <td>{{ mv.created_at|dt }}</td>
+              <td class="text-end {{ 'text-success' if mv.quantity_change > 0 else 'text-danger' }}">
+                {{ "%+d"|format(mv.quantity_change) }}
+              </td>
+              <td>{{ mv.reason|capitalize }}</td>
+              <td>
+                {% if mv.sales_order_id %}
+                  <a href="{{ url_for('orders.sale_detail', order_id=mv.sales_order_id) }}">Sale #{{ mv.sales_order_id }}</a>
+                {% elif mv.purchase_order_id %}
+                  <a href="{{ url_for('orders.purchase_detail', po_id=mv.purchase_order_id) }}">PO #{{ mv.purchase_order_id }}</a>
+                {% else %}
+                  {{ mv.note or "" }}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-muted">No stock changes yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

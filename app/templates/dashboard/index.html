@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - IMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Dashboard</h1>
+  <a href="{{ url_for('orders.new_sale') }}" class="btn btn-primary">New sale</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Sales today</div>
+      <div class="fs-3">{{ sales_count }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Sales total today</div>
+      <div class="fs-3">{{ sales_total|money }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Low-stock products</div>
+      <div class="fs-3 {{ 'text-danger' if low_stock }}">{{ low_stock|length }}</div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">Draft POs to review</div>
+      <div class="fs-3">
+        <a href="{{ url_for('orders.purchases', status='draft') }}" class="text-decoration-none">{{ draft_po_count }}</a>
+      </div>
+    </div></div>
+  </div>
+  <div class="col-sm-6 col-lg">
+    <div class="card"><div class="card-body">
+      <div class="text-muted small">POs waiting to be received</div>
+      <div class="fs-3">
+        <a href="{{ url_for('orders.purchases', status='ordered') }}" class="text-decoration-none">{{ open_po_count }}</a>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<h2 class="h5">Low stock</h2>
+{% if low_stock %}
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th>SKU</th><th>Product</th>
+        <th class="text-end">In stock</th><th class="text-end">Reorder level</th>
+        <th>Preferred supplier</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in low_stock %}
+        {% set supplier = product.preferred_supplier %}
+        <tr>
+          <td>{{ product.sku }}</td>
+          <td><a href="{{ url_for('products.product_detail', product_id=product.id) }}">{{ product.name }}</a></td>
+          <td class="text-end {{ 'text-danger fw-bold' if product.stock_qty == 0 }}">{{ product.stock_qty }}</td>
+          <td class="text-end">{{ product.reorder_level }}</td>
+          <td>{{ supplier.name if supplier else "None set" }}</td>
+          <td class="text-end">
+            {% if product.id in on_order %}
+              {% set po_id, po_status = on_order[product.id] %}
+              <a href="{{ url_for('orders.purchase_detail', po_id=po_id) }}">
+                {{ "Draft" if po_status == "draft" else "On order" }} #{{ po_id }}
+              </a>
+            {% elif supplier %}
+              <a class="btn btn-sm btn-outline-primary"
+                 href="{{ url_for('orders.new_purchase', supplier_id=supplier.id, product_id=product.id) }}">Order</a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="text-muted">Nothing is below its reorder level.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}{{ "Edit " ~ product.sku if product else "New product" }} - IMS{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-7">
+    <h1 class="h3 mb-3">{{ "Edit " ~ product.sku if product else "New product" }}</h1>
+
+    {% if not form.category_id.choices %}
+      <div class="alert alert-warning">
+        There are no categories yet. <a href="{{ url_for('products.new_category') }}">Create one first</a>.
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="row">
+        <div class="col-sm-4">{{ m.field(form.sku) }}</div>
+        <div class="col-sm-8">{{ m.field(form.name) }}</div>
+      </div>
+      {{ m.field(form.category_id) }}
+      {{ m.field(form.description) }}
+      <div class="row">
+        <div class="col-sm-4">{{ m.field(form.unit_price) }}</div>
+        <div class="col-sm-4">{{ m.field(form.cost_price) }}</div>
+        <div class="col-sm-4">{{ m.field(form.reorder_level) }}</div>
+      </div>
+
+      {% if form.opening_stock %}
+        <div class="row">
+          <div class="col-sm-4">{{ m.field(form.opening_stock) }}</div>
+          <div class="col-sm-8 form-text pt-sm-4">
+            Saved as a stock adjustment, so it shows in the stock history.
+          </div>
+        </div>
+      {% else %}
+        <p class="form-text">Stock can't be edited here. Use sales, purchase orders or "Adjust stock".</p>
+      {% endif %}
+
+      {{ form.submit(class_="btn btn-primary") }}
+      <a href="{{ url_for('products.product_detail', product_id=product.id) if product else url_for('products.products') }}"
+         class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}{{ supplier.name }} - IMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">{{ supplier.name }} {{ m.active_badge(supplier.is_active) }}</h1>
+  <div>
+    {% if supplier.is_active %}
+      <a href="{{ url_for('orders.new_purchase', supplier_id=supplier.id) }}" class="btn btn-sm btn-primary">New purchase order</a>
+    {% endif %}
+    {% if current_user.is_admin %}
+      <a href="{{ url_for('suppliers.edit_supplier', supplier_id=supplier.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+      {{ m.post_button(url_for('suppliers.toggle_supplier', supplier_id=supplier.id),
+                       "Deactivate" if supplier.is_active else "Activate") }}
+    {% endif %}
+  </div>
+</div>
+
+<dl class="row">
+  <dt class="col-sm-2">Contact</dt><dd class="col-sm-10">{{ supplier.contact_name or "-" }}</dd>
+  <dt class="col-sm-2">Email</dt><dd class="col-sm-10">{{ supplier.email or "-" }}</dd>
+  <dt class="col-sm-2">Phone</dt><dd class="col-sm-10">{{ supplier.phone or "-" }}</dd>
+  <dt class="col-sm-2">Address</dt><dd class="col-sm-10">{{ supplier.address or "-" }}</dd>
+</dl>
+
+<h2 class="h5 mt-4">Products from this supplier</h2>
+{% if links %}
+  <table class="table table-sm align-middle">
+    <thead><tr><th>SKU</th><th>Product</th><th>Preferred?</th>{% if current_user.is_admin %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+      {% for link in links %}
+        <tr>
+          <td>{{ link.product.sku }}</td>
+          <td><a href="{{ url_for('products.product_detail', product_id=link.product.id) }}">{{ link.product.name }}</a></td>
+          <td>{% if link.is_preferred %}<span class="badge text-bg-primary">Preferred</span>{% endif %}</td>
+          {% if current_user.is_admin %}
+            <td class="text-end">
+              {% if not link.is_preferred %}
+                {{ m.post_button(url_for('suppliers.set_preferred', supplier_id=supplier.id, link_id=link.id), "Make preferred") }}
+              {% endif %}
+              {{ m.post_button(url_for('suppliers.unlink_product', supplier_id=supplier.id, link_id=link.id),
+                               "Unlink", "btn btn-sm btn-outline-danger") }}
+            </td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="text-muted">No products linked yet.</p>
+{% endif %}
+
+{% if current_user.is_admin %}
+  {% if link_form.product_id.choices %}
+    <form method="post" action="{{ url_for('suppliers.link_product', supplier_id=supplier.id) }}"
+          class="row g-2 align-items-center mb-4">
+      {{ link_form.hidden_tag() }}
+      <div class="col-md-6">{{ link_form.product_id(class_="form-select") }}</div>
+      <div class="col-auto">
+        <div class="form-check">
+          {{ link_form.is_preferred(class_="form-check-input") }}
+          {{ link_form.is_preferred.label(class_="form-check-label") }}
+        </div>
+      </div>
+      <div class="col-auto">{{ link_form.submit(class_="btn btn-outline-primary") }}</div>
+    </form>
+  {% else %}
+    <p class="text-muted small">Every active product is already linked to this supplier.</p>
+  {% endif %}
+{% endif %}
+
+<h2 class="h5 mt-4">Recent purchase orders</h2>
+{% if recent_pos %}
+  <ul class="list-unstyled">
+    {% for po in recent_pos %}
+      <li>
+        <a href="{{ url_for('orders.purchase_detail', po_id=po.id) }}">PO #{{ po.id }}</a>
+        - {{ po.order_date|dt }} {{ m.po_status_badge(po.status) }}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-muted">None yet.</p>
+{% endif %}
+{% endblock %}

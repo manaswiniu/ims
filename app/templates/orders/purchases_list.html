@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}Purchase orders - IMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Purchase orders <span class="text-muted small">(latest 100)</span></h1>
+  <a href="{{ url_for('orders.new_purchase') }}" class="btn btn-primary">New purchase order</a>
+</div>
+
+<ul class="nav nav-pills mb-3">
+  {% for value, label in [(None, "All"), ("draft", "Drafts"), ("ordered", "Ordered"), ("received", "Received"), ("cancelled", "Cancelled")] %}
+    <li class="nav-item">
+      <a class="nav-link {{ 'active' if status == value }}" href="{{ url_for('orders.purchases', status=value) }}">{{ label }}</a>
+    </li>
+  {% endfor %}
+</ul>
+
+{% if orders %}
+  <table class="table table-hover align-middle">
+    <thead><tr><th>#</th><th>Ordered</th><th>Supplier</th><th>Status</th><th>Received</th><th class="text-end">Total</th></tr></thead>
+    <tbody>
+      {% for po in orders %}
+        <tr>
+          <td><a href="{{ url_for('orders.purchase_detail', po_id=po.id) }}">{{ po.id }}</a></td>
+          <td>{{ po.order_date|dt }}</td>
+          <td>{{ po.supplier.name }}</td>
+          <td>
+            {{ m.po_status_badge(po.status) }}
+            {% if po.auto_generated %}<span class="badge text-bg-light border">Auto</span>{% endif %}
+          </td>
+          <td>{{ po.received_date|dt }}</td>
+          <td class="text-end">{{ po.total|money }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="text-muted">No purchase orders here.</p>
+{% endif %}
+{% endblock %}

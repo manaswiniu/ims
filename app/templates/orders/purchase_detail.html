@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}PO #{{ po.id }} - IMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">
+    Purchase order #{{ po.id }} {{ m.po_status_badge(po.status) }}
+    {% if po.auto_generated %}<span class="badge text-bg-light border">Auto-drafted</span>{% endif %}
+  </h1>
+  <div>
+    {% if po.status == "draft" %}
+      {{ m.post_button(url_for('orders.place_purchase', po_id=po.id), "Place order", "btn btn-primary") }}
+      {{ m.post_button(url_for('orders.cancel_purchase', po_id=po.id), "Discard draft", "btn btn-outline-danger") }}
+    {% elif po.status == "ordered" %}
+      {{ m.post_button(url_for('orders.receive_purchase', po_id=po.id), "Mark received", "btn btn-success") }}
+      {{ m.post_button(url_for('orders.cancel_purchase', po_id=po.id), "Cancel order", "btn btn-outline-danger") }}
+    {% endif %}
+  </div>
+</div>
+
+{% if po.status == "draft" %}
+  <div class="alert alert-info">
+    This is a draft. Check the quantities, then "Place order" once it's been sent to the supplier.
+  </div>
+{% endif %}
+
+<dl class="row">
+  <dt class="col-sm-2">Supplier</dt>
+  <dd class="col-sm-10"><a href="{{ url_for('suppliers.supplier_detail', supplier_id=po.supplier.id) }}">{{ po.supplier.name }}</a></dd>
+  <dt class="col-sm-2">{{ "Drafted" if po.status == "draft" else "Ordered" }}</dt>
+  <dd class="col-sm-10">{{ po.order_date|dt }} by {{ po.created_by.username }}</dd>
+  {% if po.received_date %}<dt class="col-sm-2">Received</dt><dd class="col-sm-10">{{ po.received_date|dt }}</dd>{% endif %}
+  {% if po.notes %}<dt class="col-sm-2">Notes</dt><dd class="col-sm-10">{{ po.notes }}</dd>{% endif %}
+</dl>
+
+{% if po.status == "draft" %}
+  <form method="post" action="{{ url_for('orders.update_purchase_quantities', po_id=po.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{% endif %}
+
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>SKU</th><th>Product</th><th class="text-end">In stock</th>
+      <th class="text-end" style="width: 9rem">Qty</th><th class="text-end">Unit cost</th><th class="text-end">Line total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in po.items %}
+      <tr>
+        <td>{{ item.product.sku }}</td>
+        <td><a href="{{ url_for('products.product_detail', product_id=item.product.id) }}">{{ item.product.name }}</a></td>
+        <td class="text-end">{{ item.product.stock_qty }}</td>
+        <td class="text-end">
+          {% if po.status == "draft" %}
+            <input type="number" name="qty-{{ item.id }}" value="{{ item.quantity }}" min="0"
+                   class="form-control form-control-sm text-end">
+          {% else %}
+            {{ item.quantity }}
+          {% endif %}
+        </td>
+        <td class="text-end">{{ item.unit_cost|money }}</td>
+        <td class="text-end">{{ item.line_total|money }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><th colspan="5" class="text-end">Total</th><th class="text-end">{{ po.total|money }}</th></tr>
+  </tfoot>
+</table>
+
+{% if po.status == "draft" %}
+    <div class="mb-4">
+      <button type="submit" class="btn btn-outline-secondary">Save quantities</button>
+      <span class="form-text ms-2">Set a quantity to 0 to remove that line.</span>
+    </div>
+  </form>
+{% endif %}
+
+<a href="{{ url_for('orders.purchases') }}">Back to purchase orders</a>
+{% endblock %}

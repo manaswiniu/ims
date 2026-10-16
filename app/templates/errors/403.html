@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Not allowed - IMS{% endblock %}
+
+{% block content %}
+  <h1 class="h3">403 - Not allowed</h1>
+  <p>You don't have permission to do that. Ask an admin if you think you should.</p>
+  <a href="{{ url_for('dashboard.index') }}">Back to the dashboard</a>
+{% endblock %}

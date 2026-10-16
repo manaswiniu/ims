@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Sale #{{ order.id }} - IMS{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Sale #{{ order.id }}</h1>
+
+<dl class="row">
+  <dt class="col-sm-2">Date</dt><dd class="col-sm-10">{{ order.order_date|dt }}</dd>
+  <dt class="col-sm-2">Customer</dt><dd class="col-sm-10">{{ order.customer.name }}</dd>
+  <dt class="col-sm-2">Recorded by</dt><dd class="col-sm-10">{{ order.created_by.username }}</dd>
+  {% if order.notes %}<dt class="col-sm-2">Notes</dt><dd class="col-sm-10">{{ order.notes }}</dd>{% endif %}
+</dl>
+
+<table class="table">
+  <thead>
+    <tr><th>SKU</th><th>Product</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Line total</th></tr>
+  </thead>
+  <tbody>
+    {% for item in order.items %}
+      <tr>
+        <td>{{ item.product.sku }}</td>
+        <td><a href="{{ url_for('products.product_detail', product_id=item.product.id) }}">{{ item.product.name }}</a></td>
+        <td class="text-end">{{ item.quantity }}</td>
+        <td class="text-end">{{ item.unit_price|money }}</td>
+        <td class="text-end">{{ item.line_total|money }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><th colspan="4" class="text-end">Total</th><th class="text-end">{{ order.total|money }}</th></tr>
+  </tfoot>
+</table>
+
+<a href="{{ url_for('orders.sales') }}">Back to sales</a>
+{% endblock %}

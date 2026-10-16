@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}New purchase order - IMS{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">New purchase order</h1>
+
+{% if not has_suppliers %}
+  <div class="alert alert-warning">
+    There are no active suppliers yet. <a href="{{ url_for('suppliers.suppliers') }}">Add one first</a>.
+  </div>
+{% endif %}
+
+{{ m.form_errors(form) }}
+
+<form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row">
+    <div class="col-md-6">{{ m.field(form.supplier_id) }}</div>
+  </div>
+
+  <table class="table align-middle">
+    <thead>
+      <tr><th>Product</th><th style="width: 9rem">Quantity</th><th style="width: 10rem">Unit cost</th></tr>
+    </thead>
+    <tbody>
+      {% for line in form.lines %}
+        <tr>
+          <td>{{ line.product_id(class_="form-select") }}</td>
+          <td>
+            {{ line.quantity(class_="form-control" ~ (" is-invalid" if line.quantity.errors else ""), min=1) }}
+            {% for error in line.quantity.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </td>
+          <td>
+            {{ line.unit_cost(class_="form-control" ~ (" is-invalid" if line.unit_cost.errors else ""), placeholder="Product cost") }}
+            {% for error in line.unit_cost.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="form-text">Leave unit cost empty to use the product's cost price. Stock goes up only when the order is received.</p>
+
+  <div class="row">
+    <div class="col-md-6">{{ m.field(form.notes) }}</div>
+  </div>
+
+  {{ form.submit(class_="btn btn-primary") }}
+  <a href="{{ url_for('orders.purchases') }}" class="btn btn-link">Cancel</a>
+</form>
+{% endblock %}

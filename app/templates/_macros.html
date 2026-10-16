@@ -1,0 +1,51 @@
+{% macro field(f) %}
+  {% if f.type == "BooleanField" %}
+    <div class="form-check mb-3">
+      {{ f(class_="form-check-input") }}
+      {{ f.label(class_="form-check-label") }}
+    </div>
+  {% else %}
+    <div class="mb-3">
+      {{ f.label(class_="form-label") }}
+      {% set css = "form-select" if f.type == "SelectField" else "form-control" %}
+      {{ f(class_=css ~ (" is-invalid" if f.errors else "")) }}
+      {% for error in f.errors %}
+        <div class="invalid-feedback">{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro form_errors(form) %}
+  {% for error in form.form_errors %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endfor %}
+{% endmacro %}
+
+{% macro post_button(url, label, css="btn btn-sm btn-outline-secondary") %}
+  <form action="{{ url }}" method="post" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="{{ css }}">{{ label }}</button>
+  </form>
+{% endmacro %}
+
+{% macro active_badge(is_active) %}
+  {% if is_active %}
+    <span class="badge text-bg-success">Active</span>
+  {% else %}
+    <span class="badge text-bg-secondary">Inactive</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro po_status_badge(status) %}
+  {% set colours = {"draft": "info", "ordered": "warning", "received": "success", "cancelled": "secondary"} %}
+  <span class="badge text-bg-{{ colours[status] }}">{{ status|capitalize }}</span>
+{% endmacro %}
+
+{% macro inactive_toggle(endpoint, show_inactive) %}
+  {% if show_inactive %}
+    <a href="{{ url_for(endpoint) }}" class="btn btn-sm btn-link">Hide inactive</a>
+  {% else %}
+    <a href="{{ url_for(endpoint, show='all') }}" class="btn btn-sm btn-link">Show inactive</a>
+  {% endif %}
+{% endmacro %}

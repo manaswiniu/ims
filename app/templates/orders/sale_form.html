@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+
+{% block title %}New sale - IMS{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">New sale</h1>
+
+{% if not has_customers %}
+  <div class="alert alert-warning">
+    There are no customers yet. <a href="{{ url_for('customers.new_customer', next='sale') }}">Add one first</a>.
+  </div>
+{% endif %}
+
+{{ m.form_errors(form) }}
+
+<form method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <div class="row align-items-end">
+    <div class="col-md-6">{{ m.field(form.customer_id) }}</div>
+    <div class="col-md-6 mb-3">
+      <a href="{{ url_for('customers.new_customer', next='sale') }}" class="btn btn-sm btn-link">+ New customer</a>
+    </div>
+  </div>
+
+  <table class="table align-middle">
+    <thead><tr><th>Product</th><th style="width: 10rem">Quantity</th></tr></thead>
+    <tbody>
+      {% for line in form.lines %}
+        <tr>
+          <td>{{ line.product_id(class_="form-select") }}</td>
+          <td>
+            {{ line.quantity(class_="form-control" ~ (" is-invalid" if line.quantity.errors else ""), min=1) }}
+            {% for error in line.quantity.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="form-text">Leave unused lines empty. Prices are taken from the product when you save.</p>
+
+  <div class="row">
+    <div class="col-md-6">{{ m.field(form.notes) }}</div>
+  </div>
+
+  {{ form.submit(class_="btn btn-primary") }}
+  <a href="{{ url_for('orders.sales') }}" class="btn btn-link">Cancel</a>
+</form>
+{% endblock %}
